@@ -1,7 +1,7 @@
 import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+from sqlalchemy.exc import SQLAlchemyError
 
 from modelos.cliente import Cliente
 from modelos.data import Data
@@ -45,23 +45,6 @@ class ETL(AbstractETL):
 
                 if nome == 'cliente':
                     print("Tratando dados da planilha Cliente...")
-
-                    # 🧽 Tratamento de CPF
-                    def format_cpf(cpf):
-                        cpf_num = ''.join(filter(str.isdigit, str(cpf)))
-                        if len(cpf_num) == 11:
-                            return f"{cpf_num[:3]}.{cpf_num[3:6]}.{cpf_num[6:9]}-{cpf_num[9:]}"
-                        return cpf
-
-                    df['Cpf'] = df['Cpf'].apply(format_cpf)
-
-                    # 🧽 Tratamento de Telefone
-                    def format_telefone(tel):
-                        tel_num = ''.join(filter(str.isdigit, str(tel)))
-                        return tel_num
-
-                    df['Telefone'] = df['Telefone'].apply(format_telefone)
-
                 if nome == 'reserva':
                     print("Tratando dados da planilha Reserva...")
                     df = df.rename(columns={
@@ -92,8 +75,6 @@ class ETL(AbstractETL):
             print(f"Erro na transformação: {e}")
             raise
 
-# ... (extract e transform permanecem iguais)
-
     def load(self):
         try:
             print("Carregando dados no banco...")
@@ -108,24 +89,19 @@ class ETL(AbstractETL):
                 self.session.merge(quarto_obj)
             self.session.commit()
 
-            # 2. Inserir Cliente com checagem e alerta de PK
+            # 2. Inserir Cliente
             cliente_df = self.transformed_data.get('cliente', pd.DataFrame())
 
             if not cliente_df.empty:
+
                 for _, row in cliente_df.iterrows():
-                    cliente_existente = self.session.query(Cliente).filter_by(Id=row.get('Id')).first()
-
-                    if cliente_existente:
-                        print(f"Atenção: Cliente com ID {row.get('Id')} já existe no banco. Registro não será inserido novamente.")
-                    else:
-                        cliente_obj = Cliente(
-                            Id=row.get('Id'),
-                            Nome=row.get('Nome', 'Sem Nome'),
-                            Telefone=row.get('Telefone', 'Sem Telefone'),
-                            Cpf=row.get('Cpf', '000.000.000-00')
-                        )
-                        self.session.add(cliente_obj)
-
+                    cliente_obj = Cliente(
+                        Id=row.get('Id'),
+                        Nome=row.get('Nome', 'Sem Nome'),
+                        Telefone=row.get('Telefone', 'Sem Telefone'),
+                        Cpf=row.get('Cpf', '00000000000')
+                    )
+                    self.session.merge(cliente_obj)
                 self.session.commit()
             else:
                 print("Planilha Cliente está vazia ou não encontrada!")
@@ -157,9 +133,9 @@ class ETL(AbstractETL):
                 self.session.merge(status_obj)
             self.session.commit()
 
-            # 5. Inserir Reserva
+            # 5. Inserir Reserva - com validação e criação de Data ausente
             for _, row in self.transformed_data.get('reserva', pd.DataFrame()).iterrows():
-                # Validar datas
+                # Validar e garantir existência das datas de início e fim
                 for data_val, nro_quarto_col in [
                     (row.get('Data_inicio_data'), row.get('Numero_quarto_data_inicio')),
                     (row.get('Data_fim_data'), row.get('Nro_quarto_data_fim'))
@@ -177,7 +153,7 @@ class ETL(AbstractETL):
                                 Status=None
                             )
                             self.session.add(new_data)
-                            self.session.flush()
+                            self.session.flush()  # Para garantir o INSERT antes da reserva
 
                 reserva_obj = Reserva(
                     Nro=row.get('Nro'),
@@ -198,4 +174,3 @@ class ETL(AbstractETL):
             self.session.rollback()
             print(f"Erro ao carregar no banco: {e}")
             raise
-
