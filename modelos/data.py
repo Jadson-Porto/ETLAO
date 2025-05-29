@@ -14,7 +14,7 @@ class Data(Base, Base.Base):
         UniqueConstraint('Data', 'Nro_quarto', name='UQ_Data_Data_NroQuarto'),
     )
 
-    # Relacionamentos com Reserva (opcional, se quiser fazer)
+    
     reservas_inicio = relationship(
         "Reserva",
         foreign_keys="[Reserva.Data_inicio_data, Reserva.Numero_quarto_data_inicio]",
