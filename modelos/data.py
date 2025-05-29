@@ -1,8 +1,8 @@
 from sqlalchemy import Column, Integer, String, Date, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
-from modelos.base import Base, BaseMixin
+from modelos.base import Base
 
-class Data(Base, BaseMixin):
+class Data(Base, Base.Base):
     __tablename__ = "Data"
 
     Id = Column(Integer, primary_key=True, autoincrement=True)

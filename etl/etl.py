@@ -46,7 +46,7 @@ class ETL(AbstractETL):
                 if nome == 'cliente':
                     print("Tratando dados da planilha Cliente...")
 
-                    # 🧽 Tratamento de CPF
+                    
                     def format_cpf(cpf):
                         cpf_num = ''.join(filter(str.isdigit, str(cpf)))
                         if len(cpf_num) == 11:
@@ -55,7 +55,7 @@ class ETL(AbstractETL):
 
                     df['Cpf'] = df['Cpf'].apply(format_cpf)
 
-                    # 🧽 Tratamento de Telefone
+                    
                     def format_telefone(tel):
                         tel_num = ''.join(filter(str.isdigit, str(tel)))
                         return tel_num
@@ -92,13 +92,13 @@ class ETL(AbstractETL):
             print(f"Erro na transformação: {e}")
             raise
 
-# ... (extract e transform permanecem iguais)
+
 
     def load(self):
         try:
             print("Carregando dados no banco...")
 
-            # 1. Inserir Quarto
+            
             for _, row in self.transformed_data.get('quarto', pd.DataFrame()).iterrows():
                 quarto_obj = Quarto(
                     Nro=row.get('Nro'),
@@ -108,7 +108,7 @@ class ETL(AbstractETL):
                 self.session.merge(quarto_obj)
             self.session.commit()
 
-            # 2. Inserir Cliente com checagem e alerta de PK
+            
             cliente_df = self.transformed_data.get('cliente', pd.DataFrame())
 
             if not cliente_df.empty:
@@ -130,7 +130,7 @@ class ETL(AbstractETL):
             else:
                 print("Planilha Cliente está vazia ou não encontrada!")
 
-            # 3. Inserir Data
+            
             for _, row in self.transformed_data.get('data', pd.DataFrame()).iterrows():
                 existing_data = self.session.query(Data).filter_by(
                     Data=row.get('Data'),
@@ -149,7 +149,7 @@ class ETL(AbstractETL):
 
             self.session.commit()
 
-            # 4. Inserir Status
+            
             for _, row in self.transformed_data.get('status', pd.DataFrame()).iterrows():
                 status_obj = Status(
                     Nome=row.get('Nome')
@@ -157,9 +157,9 @@ class ETL(AbstractETL):
                 self.session.merge(status_obj)
             self.session.commit()
 
-            # 5. Inserir Reserva
+            
             for _, row in self.transformed_data.get('reserva', pd.DataFrame()).iterrows():
-                # Validar datas
+                
                 for data_val, nro_quarto_col in [
                     (row.get('Data_inicio_data'), row.get('Numero_quarto_data_inicio')),
                     (row.get('Data_fim_data'), row.get('Nro_quarto_data_fim'))

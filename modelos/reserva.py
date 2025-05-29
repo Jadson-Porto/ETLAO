@@ -1,8 +1,8 @@
 from sqlalchemy import Column, Integer, String, Date, ForeignKeyConstraint
 from sqlalchemy.orm import relationship
-from modelos.base import Base, BaseMixin
+from modelos.base import Base
 
-class Reserva(Base, BaseMixin):
+class Reserva(Base, Base.Base):
     __tablename__ = "Reserva"
 
     Id = Column(Integer, primary_key=True, autoincrement=True)

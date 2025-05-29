@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String
-from modelos.base import Base, BaseMixin
+from modelos.base import Base
 
-class Cliente(Base, BaseMixin):
+class Cliente(Base, Base.Base):
     __tablename__ = "Cliente"
 
     Id = Column(Integer, primary_key=True, autoincrement=True)
